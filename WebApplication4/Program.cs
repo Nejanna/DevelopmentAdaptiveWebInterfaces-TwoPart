@@ -19,6 +19,7 @@ builder.Services.AddScoped<IMenuService, MenuService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IExcelService, ExcelService>();
 builder.Services.AddControllers();
 builder.Services.AddSwaggerGen(c =>
 {
