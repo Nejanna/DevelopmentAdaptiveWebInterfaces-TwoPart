@@ -25,7 +25,7 @@ namespace WebApplication4.Controllers
         }
 
         [HttpPost("login")]
-        public async Task<IActionResult> Login(Login model)
+        public async Task<IActionResult> Login(User model)
         {
             var token = await _authService.LoginAsync(model);
 

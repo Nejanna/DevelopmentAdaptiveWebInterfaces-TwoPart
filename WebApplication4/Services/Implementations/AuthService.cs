@@ -60,11 +60,11 @@ namespace WebApplication4.Services.Implementations
 
         }
 
-        public async Task<string> LoginAsync(Login model)
+        public async Task<string> LoginAsync(User model)
         {
             try
             {
-                var user = _users.FirstOrDefault(u => u.Email == model.Email && u.PasswordHash == model.Password);
+                var user = _users.FirstOrDefault(u => u.Email == model.Email && u.PasswordHash == model.PasswordHash);
 
                 if (user == null)
                 {
