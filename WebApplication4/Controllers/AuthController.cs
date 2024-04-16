@@ -1,8 +1,9 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Serilog;
 using WebApplication4.Models;
 using WebApplication4.Services.Interfaces;
 
-// For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+
 
 namespace WebApplication4.Controllers
 {
@@ -24,6 +25,7 @@ namespace WebApplication4.Controllers
             return Ok(model);
         }
 
+
         [HttpPost("login")]
         public async Task<IActionResult> Login(User model)
         {
@@ -31,10 +33,16 @@ namespace WebApplication4.Controllers
 
             if (!string.IsNullOrEmpty(token))
             {
+                // Логування успішного входу task 3
+                Log.Information("User {Email} logged in at {Time}", model.Email, DateTime.Now);
+
                 return Ok(new { Token = token });
             }
             else
             {
+                // Логування task 3
+                Log.Information("User {Email} logged in at {Time}", model.Email, DateTime.Now);
+
                 return Unauthorized("Invalid email or password.");
             }
         }

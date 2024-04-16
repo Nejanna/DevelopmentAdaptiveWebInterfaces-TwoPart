@@ -14,19 +14,43 @@ using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.EntityFrameworkCore;
 using System.Data.Entity;
 using HealthChecks.UI.Data;
+using Microsoft.Extensions.Logging;
+using Serilog.Core;
+using WebApplication4.Services;
+using Serilog;
 
+
+
+// lab11
+Log.Logger = new LoggerConfiguration()
+    .MinimumLevel.Debug()
+    .WriteTo.Seq("http://localhost:5341")
+    .WriteTo.Console()
+    .WriteTo.File("logs/myapp.txt", rollingInterval: RollingInterval.Day)
+    .CreateLogger();
+
+Log.Information("Information message");
+Log.Warning("Warning message");
+Log.Error("Error message");
+Log.Fatal("Fatal message");
+
+try
+{
 var builder = WebApplication.CreateBuilder(args);
-
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-builder.Services.AddScoped<IMenuService, MenuService>();
+    //builder.Services.AddSerilog();
+    builder.Host.UseSerilog(Log.Logger);
+
+
+    builder.Services.AddScoped<IMenuService, MenuService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<MyHealthCheckService>();
-
+builder.Services.AddHealthChecks();
 
 builder.Services.AddControllers();
 builder.Services.AddSwaggerGen(c =>
@@ -85,11 +109,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
-builder.Services.AddHealthChecks()
-.AddCheck("example", new MyHealthCheckService())
-.AddCheck("db", new MyHealthCheckService());
-builder.Services.AddHealthChecks()
-           .AddSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"), name: "db");
+
 var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
@@ -97,24 +117,13 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseHealthChecks("/healthExample", new HealthCheckOptions
-{
-    Predicate = (check) => check.Tags.Contains("example"),
-});
-app.UseHealthChecks("/healthDB", new HealthCheckOptions
-{
-    Predicate = (check) => check.Tags.Contains("db"),
-});
+
 //Власний кастомний письменник відповіді
-app.MapHealthChecks("/health", new HealthCheckOptions
+app.UseHealthChecks("/health", new HealthCheckOptions
  {
      ResponseWriter = CustomHealthCheckResponseWriter.WriteResponse
  });
-//task 5 для графічного представлення стану HealthCheck
-app.UseHealthChecksUI(options =>
-{
-    options.UIPath = "/healthui";
-});
+
 
 
 app.UseHttpsRedirection();
@@ -122,3 +131,15 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+    const string name = "Serilog";
+    Log.Information("Hello, {Name}!", name);
+    throw new InvalidOperationException("Oops...");
+}
+catch (Exception ex)
+{
+    Log.Error(ex, "Unhandled exception");
+}
+finally
+{
+    await Log.CloseAndFlushAsync();
+}
