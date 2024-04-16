@@ -115,7 +115,7 @@ app.UseHealthChecks("/health", new HealthCheckOptions
      ResponseWriter = CustomHealthCheckResponseWriter.WriteResponse
  });
 
-app.UseHealthChecks("/dbhealth", new HealthCheckOptions
+app.UseHealthChecks("/health/db", new HealthCheckOptions
 {
     Predicate = (check) => check.Tags.Contains("db"),
 });
