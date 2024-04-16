@@ -21,28 +21,13 @@ using Serilog;
 
 
 
-// lab11
-Log.Logger = new LoggerConfiguration()
-    .MinimumLevel.Debug()
-    .WriteTo.Seq("http://localhost:5341")
-    .WriteTo.Console()
-    .WriteTo.File("logs/myapp.txt", rollingInterval: RollingInterval.Day)
-    .CreateLogger();
 
-Log.Information("Information message");
-Log.Warning("Warning message");
-Log.Error("Error message");
-Log.Fatal("Fatal message");
-
-try
-{
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-    //builder.Services.AddSerilog();
-    builder.Host.UseSerilog(Log.Logger);
+
 
 
     builder.Services.AddScoped<IMenuService, MenuService>();
@@ -50,7 +35,7 @@ builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<MyHealthCheckService>();
-builder.Services.AddHealthChecks();
+
 
 builder.Services.AddControllers();
 builder.Services.AddSwaggerGen(c =>
@@ -83,13 +68,13 @@ builder.Services.AddSwaggerGen(c =>
 
 
 
-// Ç÷èòóºìî íàëàøòóâàííÿ JWT ç appsettings.json
+// Ð—Ñ‡Ð¸Ñ‚ÑƒÑ”Ð¼Ð¾ Ð½Ð°Ð»Ð°ÑˆÑ‚ÑƒÐ²Ð°Ð½Ð½Ñ JWT Ð· appsettings.json
 
 var configuration = new ConfigurationBuilder()
     .AddJsonFile("appsettings.json")
     .Build();
 
-// Îòðèìàííÿ ñåêö³¿ êîíô³ãóðàö³¿ JwtSettings
+// ÐžÑ‚Ñ€Ð¸Ð¼Ð°Ð½Ð½Ñ ÑÐµÐºÑ†Ñ–Ñ— ÐºÐ¾Ð½Ñ„Ñ–Ð³ÑƒÑ€Ð°Ñ†Ñ–Ñ— JwtSettings
 var jwtConfig = configuration.GetSection("JwtSettings");
 builder.Services.AddAuthorization();
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -110,6 +95,13 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     });
 
 
+string connectionString = Configuration.GetConnectionString("DefaultConnection");
+builder.Services.AddHealthChecks()
+    .AddSqlServer(connectionString, tags: new[] { "db" });
+
+builder.Services.AddHealthChecks();
+
+
 var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
@@ -118,28 +110,24 @@ if (app.Environment.IsDevelopment())
 }
 
 
-//Âëàñíèé êàñòîìíèé ïèñüìåííèê â³äïîâ³ä³
+//Ð’Ð»Ð°ÑÐ½Ð¸Ð¹ ÐºÐ°ÑÑ‚Ð¾Ð¼Ð½Ð¸Ð¹ Ð¿Ð¸ÑÑŒÐ¼ÐµÐ½Ð½Ð¸Ðº Ð²Ñ–Ð´Ð¿Ð¾Ð²Ñ–Ð´Ñ–
 app.UseHealthChecks("/health", new HealthCheckOptions
  {
      ResponseWriter = CustomHealthCheckResponseWriter.WriteResponse
  });
 
+app.UseHealthChecks("/dbhealth", new HealthCheckOptions
+{
+    Predicate = (check) => check.Tags.Contains("db"),
+});
 
+app.UseHealthChecksUI(options =>
+{
+    options.UIPath = "/healthchecks-ui";
+});
 
 app.UseHttpsRedirection();
 app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
-    const string name = "Serilog";
-    Log.Information("Hello, {Name}!", name);
-    throw new InvalidOperationException("Oops...");
-}
-catch (Exception ex)
-{
-    Log.Error(ex, "Unhandled exception");
-}
-finally
-{
-    await Log.CloseAndFlushAsync();
-}
