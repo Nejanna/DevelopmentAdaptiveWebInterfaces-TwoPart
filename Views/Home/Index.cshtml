@@ -1,0 +1,38 @@
+﻿
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Real-Time Crypto Data</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="~/js/signalr.min.js"></script>
+</head>
+<body>
+    <div id="cryptoData">
+        <!-- Тут буде виведена отримана інформація -->
+    </div>
+
+    <script>
+       
+            var connection = new signalR.HubConnectionBuilder()
+                .withUrl("/currencyHub")
+                .build();
+
+            connection.on("ReceiveData", function (data) {
+                // Виведення отриманих даних на сторінку
+                $("#cryptoData").html("<pre>" + JSON.stringify(data, null, 2) + "</pre>");
+            });
+
+            connection.start()
+                .then(function () {
+                    console.log("Connected to SignalR Hub.");
+                 
+                    connection.invoke("GetCurrency");
+                })
+                .catch(function (err) {
+                    return console.error(err.toString());
+                });
+ 
+    </script>
+</body>
+</html>
+
